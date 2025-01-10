@@ -67,7 +67,7 @@ def post_to_twitter_selenium(username, password, tweet):
         chrome_options.add_argument("--disable-gpu")
 
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        driver.get("https://twitter.com/login")
+        driver.get("https://x.com/i/flow/login")
         time.sleep(5)
 
         # Log in to Twitter
