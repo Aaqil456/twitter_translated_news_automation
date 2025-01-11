@@ -1,8 +1,9 @@
 name: Run Crypto News Bot
 
 on:
-  #schedule:
-    #- cron: "0 * * * *"  # Run every hour
+  # Uncomment the schedule if you want it to run every hour automatically
+  # schedule:
+  #   - cron: "0 * * * *"  # Run every hour
   workflow_dispatch:  # Allow manual execution
 
 jobs:
@@ -37,15 +38,18 @@ jobs:
         run: |
           pip install requests selenium webdriver-manager
 
-      # Step 5: Set up environment variables
-      - name: Set up environment variables
-        env:
-          CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
-          EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
-          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
-          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
-        run: echo "Environment variables configured."
+      # Step 5: Export environment variables
+      - name: Export environment variables
+        run: |
+          echo "export CRYPTOPANIC_API_KEY=${{ secrets.CRYPTOPANIC_API_KEY }}" >> $GITHUB_ENV
+          echo "export EASY_PEASY_API_KEY=${{ secrets.EASY_PEASY_API_KEY }}" >> $GITHUB_ENV
+          echo "export TWITTER_USERNAME=${{ secrets.TWITTER_USERNAME }}" >> $GITHUB_ENV
+          echo "export TWITTER_PASSWORD=${{ secrets.TWITTER_PASSWORD }}" >> $GITHUB_ENV
 
-      # Step 6: Run the Python script
+      # Step 6: Debug environment variables (for testing, remove this in production)
+      - name: Debug environment variables
+        run: env
+
+      # Step 7: Run the Python script
       - name: Run Python script
         run: python cryptonews_translator.py
