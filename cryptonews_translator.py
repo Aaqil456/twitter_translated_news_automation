@@ -10,11 +10,7 @@ from selenium.webdriver.chrome.options import Options
 import time
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Set environment variables (for local testing, replace with actual values or set these in your environment)
-os.environ["CRYPTOPANIC_API_KEY"] = "b07d7003878406ba6c40ccd64b044855e2e96c8b"
-os.environ["EASY_PEASY_API_KEY"] = "a4cc18de-8311-429d-9948-ed0045cf7b45"
-os.environ["TWITTER_USERNAME"] = "teknologib60475"
-os.environ["TWITTER_PASSWORD"] = "block2424"
+
 
 # Function to fetch the latest hot news from CryptoPanic
 def fetch_latest_hot_news(api_key):
