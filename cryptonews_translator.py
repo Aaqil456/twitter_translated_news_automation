@@ -10,8 +10,6 @@ from selenium.webdriver.chrome.options import Options
 import time
 from webdriver_manager.chrome import ChromeDriverManager
 
-
-
 # Function to fetch the latest hot news from CryptoPanic
 def fetch_latest_hot_news(api_key):
     url = f"https://cryptopanic.com/api/v1/posts/?auth_token={api_key}&filter=hot"
@@ -67,9 +65,12 @@ def post_to_twitter_selenium(username, password, tweet):
         time.sleep(5)
 
         # Log in to Twitter
-        username_field = driver.find_element(By.NAME, "session[username_or_email]")
-        password_field = driver.find_element(By.NAME, "session[password]")
+        username_field = driver.find_element(By.NAME, "text")
         username_field.send_keys(username)
+        username_field.send_keys(Keys.RETURN)
+        time.sleep(5)
+
+        password_field = driver.find_element(By.NAME, "password")
         password_field.send_keys(password)
         password_field.send_keys(Keys.RETURN)
         time.sleep(5)
