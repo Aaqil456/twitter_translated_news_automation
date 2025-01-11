@@ -1,10 +1,10 @@
 name: Run Crypto News Bot
 
 on:
-  # Uncomment the schedule if you want it to run every hour automatically
+  workflow_dispatch:  # Allow manual execution
+  # Uncomment to run on schedule
   # schedule:
   #   - cron: "0 * * * *"  # Run every hour
-  workflow_dispatch:  # Allow manual execution
 
 jobs:
   run_script:
@@ -39,17 +39,33 @@ jobs:
           pip install requests selenium webdriver-manager
 
       # Step 5: Export environment variables
-      - name: Export environment variables
+      - name: Set environment variables for the script
+        env:
+          CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
+          EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
+          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
+          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
         run: |
-          echo "export CRYPTOPANIC_API_KEY=${{ secrets.CRYPTOPANIC_API_KEY }}" >> $GITHUB_ENV
-          echo "export EASY_PEASY_API_KEY=${{ secrets.EASY_PEASY_API_KEY }}" >> $GITHUB_ENV
-          echo "export TWITTER_USERNAME=${{ secrets.TWITTER_USERNAME }}" >> $GITHUB_ENV
-          echo "export TWITTER_PASSWORD=${{ secrets.TWITTER_PASSWORD }}" >> $GITHUB_ENV
+          echo "Environment variables set."
 
-      # Step 6: Debug environment variables (for testing, remove this in production)
+      # Step 6: Debug environment variables (optional for testing)
       - name: Debug environment variables
-        run: env
+        env:
+          CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
+          EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
+          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
+          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
+        run: |
+          echo "CRYPTOPANIC_API_KEY=$CRYPTOPANIC_API_KEY"
+          echo "EASY_PEASY_API_KEY=$EASY_PEASY_API_KEY"
+          echo "TWITTER_USERNAME=$TWITTER_USERNAME"
+          echo "TWITTER_PASSWORD=$TWITTER_PASSWORD"
 
       # Step 7: Run the Python script
       - name: Run Python script
+        env:
+          CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
+          EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
+          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
+          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
         run: python cryptonews_translator.py
