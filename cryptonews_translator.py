@@ -10,6 +10,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+import pickle
 from webdriver_manager.chrome import ChromeDriverManager
 
 # Function to fetch the latest hot news from CryptoPanic
@@ -52,74 +53,95 @@ def translate_text_easypeasy(api_key, text):
         print(f"Translation API error: {response.status_code}, {response.text}")
         return "Translation failed"
 
-# Function to post tweets using Selenium in headless mode
-def post_to_twitter_selenium(username, password, tweet):
-    try:
-        # Set up Selenium WebDriver with headless Chrome
-        chrome_options = Options()
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--no-sandbox")
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        chrome_options.add_argument("--disable-gpu")
+# Function to save cookies after manual login
+def save_cookies(username, password):
+    chrome_options = Options()
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
 
-        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
-        driver.get("https://x.com/i/flow/login")
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    driver.get("https://x.com/i/flow/login")
+    time.sleep(5)
+
+    # Log in manually
+    try:
+        print("Finding username field...")
+        username_field = driver.find_element(By.NAME, "text")
+        username_field.send_keys(username)
+        username_field.send_keys(Keys.RETURN)
         time.sleep(5)
 
-        # Log in to Twitter
-        try:
-            print("Finding username field...")
-            username_field = driver.find_element(By.NAME, "text")
-            username_field.send_keys(username)
-            username_field.send_keys(Keys.RETURN)
-            time.sleep(5)
-            driver.save_screenshot("step_after_username.png")
-        except Exception as e:
-            print("Error finding or interacting with username field:", e)
-            driver.save_screenshot("error_username_field.png")
-            driver.quit()
-            return
+        print("Finding password field...")
+        password_field = driver.find_element(By.NAME, "password")
+        password_field.send_keys(password)
+        password_field.send_keys(Keys.RETURN)
+        time.sleep(5)
 
-        try:
-            print("Finding password field...")
-            password_field = driver.find_element(By.NAME, "password")
-            password_field.send_keys(password)
-            password_field.send_keys(Keys.RETURN)
-            time.sleep(5)
-            driver.save_screenshot("step_after_password.png")
-        except Exception as e:
-            print("Error finding or interacting with password field:", e)
-            driver.save_screenshot("error_password_field.png")
-            driver.quit()
-            return
-
-        # Verify login success
-        print("Checking redirection to the homepage...")
         if "home" in driver.current_url:
-            print("Login successful!")
+            print("Login successful! Saving cookies...")
+            with open("cookies.pkl", "wb") as file:
+                pickle.dump(driver.get_cookies(), file)
+            print("Cookies saved successfully.")
         else:
-            print("Login might have failed. Current URL:", driver.current_url)
+            print("Login failed. Please check credentials or security prompts.")
             driver.save_screenshot("login_failed.png")
-            driver.quit()
-            return
-
-        # Post the tweet
-        try:
-            print("Finding tweet box...")
-            tweet_box = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "div[aria-label='Tweet text']"))
-            )
-            tweet_box.send_keys(tweet)
-            tweet_box.send_keys(Keys.CONTROL, Keys.ENTER)  # Post the tweet
-            time.sleep(5)
-            print(f"Tweet posted: {tweet}")
-        except Exception as e:
-            print("Error finding or interacting with tweet box:", e)
-            driver.save_screenshot("error_tweet_box.png")
-
-        driver.quit()
     except Exception as e:
-        print(f"Error posting to Twitter: {e}")
+        print("Error during manual login:", e)
+    finally:
+        driver.quit()
+
+# Function to load cookies and post a tweet
+def post_to_twitter_with_cookies(tweet):
+    chrome_options = Options()
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-gpu")
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
+    driver.get("https://x.com")
+    time.sleep(5)
+
+    # Load cookies
+    try:
+        with open("cookies.pkl", "rb") as file:
+            cookies = pickle.load(file)
+            for cookie in cookies:
+                driver.add_cookie(cookie)
+        print("Cookies loaded successfully.")
+    except FileNotFoundError:
+        print("Cookies file not found. Please log in manually to save cookies first.")
+        driver.quit()
+        return
+
+    # Refresh the page to apply cookies
+    driver.refresh()
+    time.sleep(5)
+
+    # Verify login persistence
+    if "home" in driver.current_url:
+        print("Persistent login successful. Ready to post tweet.")
+    else:
+        print("Persistent login failed. Please log in again to update cookies.")
+        driver.save_screenshot("persistent_login_failed.png")
+        driver.quit()
+        return
+
+    # Post the tweet
+    try:
+        print("Finding tweet box...")
+        tweet_box = WebDriverWait(driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "div[aria-label='Tweet text']"))
+        )
+        tweet_box.send_keys(tweet)
+        tweet_box.send_keys(Keys.CONTROL, Keys.ENTER)  # Post the tweet
+        time.sleep(5)
+        print(f"Tweet posted: {tweet}")
+    except Exception as e:
+        print("Error posting tweet:", e)
+        driver.save_screenshot("error_posting_tweet.png")
+    finally:
+        driver.quit()
 
 # Main script
 def main():
@@ -153,8 +175,11 @@ def main():
     if len(tweet) > 280:
         tweet = tweet[:277] + "..."
 
-    # Step 3: Post the tweet using Selenium
-    post_to_twitter_selenium(TWITTER_USERNAME, TWITTER_PASSWORD, tweet)
+    # Step 3: Post the tweet using cookies
+    post_to_twitter_with_cookies(tweet)
+
+# Uncomment the line below to save cookies initially
+# save_cookies("your_twitter_username", "your_twitter_password")
 
 # Run the main script
 if __name__ == "__main__":
