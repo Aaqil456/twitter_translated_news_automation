@@ -43,36 +43,27 @@ jobs:
         env:
           CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
           EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
-          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
-          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
         run: echo "Environment variables set."
 
-      # Step 6: Debug environment variables (optional for testing)
-      - name: Debug environment variables
-        env:
-          CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
-          EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
-          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
-          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
-        run: |
-          echo "CRYPTOPANIC_API_KEY=$CRYPTOPANIC_API_KEY"
-          echo "EASY_PEASY_API_KEY=$EASY_PEASY_API_KEY"
-          echo "TWITTER_USERNAME=$TWITTER_USERNAME"
-          echo "TWITTER_PASSWORD=$TWITTER_PASSWORD"
+      # Step 6: Download the cookies file (if it exists)
+      - name: Download cookies
+        uses: actions/download-artifact@v3
+        with:
+          name: cookies
+          path: cookies.pkl
+        continue-on-error: true  # Proceed even if the cookies file doesn't exist
 
       # Step 7: Run the Python script
       - name: Run Python script
         env:
           CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
           EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
-          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
-          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
         run: python cryptonews_translator.py
 
-      # Step 8: Upload screenshots for debugging
-      - name: Upload screenshots
-        if: always()  # Ensure screenshots are uploaded even if the script fails
+      # Step 8: Upload cookies file (after login)
+      - name: Upload cookies
+        if: always()  # Ensure cookies are uploaded even if the script fails
         uses: actions/upload-artifact@v3
         with:
-          name: screenshots
-          path: "*.png"  # Upload all PNG files generated during the script
+          name: cookies
+          path: cookies.pkl
