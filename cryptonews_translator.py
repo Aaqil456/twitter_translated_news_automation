@@ -53,10 +53,10 @@ def translate_text_easypeasy(api_key, text):
         print(f"Translation API error: {response.status_code}, {response.text}")
         return "Translation failed"
 
-# Function to save cookies after manual login
+# Function to save cookies after login
 def save_cookies(username, password):
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")  # Run in headless mode for GitHub
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
@@ -79,7 +79,6 @@ def save_cookies(username, password):
         password_field.send_keys(Keys.RETURN)
         time.sleep(5)
 
-        # Save cookies
         if "home" in driver.current_url:
             print("Login successful! Saving cookies...")
             with open("cookies.pkl", "wb") as file:
@@ -89,15 +88,14 @@ def save_cookies(username, password):
             print("Login failed. Please check credentials or security prompts.")
             driver.save_screenshot("login_failed.png")
     except Exception as e:
-        print("Error during manual login:", e)
-        driver.save_screenshot("error_during_login.png")
+        print("Error during login:", e)
     finally:
         driver.quit()
 
 # Function to load cookies and post a tweet
 def post_to_twitter_with_cookies(tweet):
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--headless")  # Run in headless mode for GitHub
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument("--disable-gpu")
@@ -160,11 +158,7 @@ def main():
         print("API keys or Twitter credentials are missing! Please set them as environment variables.")
         return
 
-    # Step 1: Save cookies
-    print("Saving cookies for Twitter login...")
-    save_cookies(TWITTER_USERNAME, TWITTER_PASSWORD)
-
-    # Step 2: Fetch the latest hot news
+    # Step 1: Fetch the latest hot news
     print("Fetching the latest hot news from CryptoPanic...")
     latest_news = fetch_latest_hot_news(CRYPTOPANIC_API_KEY)
 
@@ -172,7 +166,7 @@ def main():
         print("No latest hot news fetched. Exiting.")
         return
 
-    # Step 3: Translate the news title
+    # Step 2: Translate the news title
     print("Translating the latest news title...")
     malay_title = translate_text_easypeasy(EASY_PEASY_API_KEY, latest_news["title"])
 
@@ -183,8 +177,12 @@ def main():
     if len(tweet) > 280:
         tweet = tweet[:277] + "..."
 
-    # Step 4: Post the tweet using cookies
+    # Step 3: Post the tweet using cookies
     post_to_twitter_with_cookies(tweet)
 
+# Uncomment the line below to save cookies initially
+    save_cookies("your_twitter_username", "your_twitter_password")
+
+# Run the main script
 if __name__ == "__main__":
     main()
