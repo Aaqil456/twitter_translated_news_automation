@@ -43,27 +43,24 @@ jobs:
         env:
           CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
           EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
+          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
+          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
         run: echo "Environment variables set."
 
-      # Step 6: Download the cookies file (if it exists)
-      - name: Download cookies
-        uses: actions/download-artifact@v3
-        with:
-          name: cookies
-          path: cookies.pkl
-        continue-on-error: true  # Proceed even if the cookies file doesn't exist
-
-      # Step 7: Run the Python script
+      # Step 6: Run the Python script
       - name: Run Python script
         env:
           CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
           EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
+          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
+          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
         run: python cryptonews_translator.py
 
-      # Step 8: Upload cookies file (after login)
-      - name: Upload cookies
-        if: always()  # Ensure cookies are uploaded even if the script fails
-        uses: actions/upload-artifact@v3
-        with:
-          name: cookies
-          path: cookies.pkl
+      # Step 7: Commit and push cookies.pkl back to the repository
+      - name: Commit and push updated cookies
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add cookies.pkl
+          git commit -m "Update cookies.pkl for persistent login"
+          git push
