@@ -7,6 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 from webdriver_manager.chrome import ChromeDriverManager
 
@@ -64,55 +66,60 @@ def post_to_twitter_selenium(username, password, tweet):
         driver.get("https://x.com/i/flow/login")
         time.sleep(5)
 
-        # Step 1: Enter username
-        print("Attempting to enter username...")
-        username_field = driver.find_element(By.NAME, "text")
-        username_field.send_keys(username)
-        username_field.send_keys(Keys.RETURN)
-        time.sleep(5)
-
-        # Verify if redirected to password input field
-        if "password" in driver.page_source:
-            print("Username accepted, navigating to password entry.")
-        else:
-            print("Failed to navigate to password entry. Check the username step.")
-            driver.save_screenshot("debug_username.png")
+        # Log in to Twitter
+        try:
+            print("Finding username field...")
+            username_field = driver.find_element(By.NAME, "text")
+            username_field.send_keys(username)
+            username_field.send_keys(Keys.RETURN)
+            time.sleep(5)
+            driver.save_screenshot("step_after_username.png")
+        except Exception as e:
+            print("Error finding or interacting with username field:", e)
+            driver.save_screenshot("error_username_field.png")
             driver.quit()
             return
 
-        # Step 2: Enter password
-        print("Attempting to enter password...")
-        password_field = driver.find_element(By.NAME, "password")
-        password_field.send_keys(password)
-        password_field.send_keys(Keys.RETURN)
-        time.sleep(5)
-
-        # Step 3: Verify successful login
-        print("Checking if login is successful...")
-        if "home" in driver.current_url or "compose/tweet" in driver.page_source:
-            print("Login successful! Navigating to tweet box.")
-        else:
-            print("Login failed. Check credentials or additional verification steps.")
-            driver.save_screenshot("debug_password.png")
+        try:
+            print("Finding password field...")
+            password_field = driver.find_element(By.NAME, "password")
+            password_field.send_keys(password)
+            password_field.send_keys(Keys.RETURN)
+            time.sleep(5)
+            driver.save_screenshot("step_after_password.png")
+        except Exception as e:
+            print("Error finding or interacting with password field:", e)
+            driver.save_screenshot("error_password_field.png")
             driver.quit()
             return
 
-        # Step 4: Post the tweet
-        print("Attempting to locate tweet box...")
-        tweet_box = driver.find_element(By.CSS_SELECTOR, "div[aria-label='Tweet text']")
-        tweet_box.send_keys(tweet)
-        tweet_box.send_keys(Keys.CONTROL, Keys.ENTER)  # Post the tweet
-        time.sleep(5)
-        print(f"Tweet posted: {tweet}")
+        # Verify login success
+        print("Checking redirection to the homepage...")
+        if "home" in driver.current_url:
+            print("Login successful!")
+        else:
+            print("Login might have failed. Current URL:", driver.current_url)
+            driver.save_screenshot("login_failed.png")
+            driver.quit()
+            return
 
-        # Close the browser
+        # Post the tweet
+        try:
+            print("Finding tweet box...")
+            tweet_box = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "div[aria-label='Tweet text']"))
+            )
+            tweet_box.send_keys(tweet)
+            tweet_box.send_keys(Keys.CONTROL, Keys.ENTER)  # Post the tweet
+            time.sleep(5)
+            print(f"Tweet posted: {tweet}")
+        except Exception as e:
+            print("Error finding or interacting with tweet box:", e)
+            driver.save_screenshot("error_tweet_box.png")
+
         driver.quit()
-
     except Exception as e:
-        print(f"Error during Twitter automation: {e}")
-        driver.save_screenshot("debug_error.png")  # Capture a screenshot on error
-        driver.quit()
-
+        print(f"Error posting to Twitter: {e}")
 
 # Main script
 def main():
