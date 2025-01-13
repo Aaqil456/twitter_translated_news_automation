@@ -2,9 +2,6 @@ name: Run Crypto News Bot
 
 on:
   workflow_dispatch:  # Allow manual execution
-  # Uncomment to run on schedule
-  # schedule:
-  #   - cron: "0 * * * *"  # Run every hour
 
 jobs:
   run_script:
@@ -38,8 +35,8 @@ jobs:
         run: |
           pip install requests selenium webdriver-manager
 
-      # Step 5: Export environment variables
-      - name: Set environment variables for the script
+      # Step 5: Set environment variables
+      - name: Set environment variables
         env:
           CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
           EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
@@ -47,20 +44,27 @@ jobs:
           TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
         run: echo "Environment variables set."
 
-      # Step 6: Run the Python script
-      - name: Run Python script
-        env:
-          CRYPTOPANIC_API_KEY: ${{ secrets.CRYPTOPANIC_API_KEY }}
-          EASY_PEASY_API_KEY: ${{ secrets.EASY_PEASY_API_KEY }}
-          TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
-          TWITTER_PASSWORD: ${{ secrets.TWITTER_PASSWORD }}
+      # Step 6: Run Python script to save cookies
+      - name: Save Cookies
         run: python cryptonews_translator.py
 
-      # Step 7: Commit and push cookies.pkl back to the repository
-      - name: Commit and push updated cookies
+      # Step 7: Upload `cookies.pkl` for persistent login
+      - name: Commit and push cookies.pkl
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add cookies.pkl
-          git commit -m "Update cookies.pkl for persistent login"
-          git push
+          git commit -m "Update cookies.pkl for persistent login" || echo "No changes to commit"
+          git push || echo "Push failed"
+
+      # Step 8: Run the Python script for posting
+      - name: Post Tweet
+        run: python cryptonews_translator.py
+
+      # Step 9: Upload screenshots for debugging
+      - name: Upload screenshots
+        if: always()  # Ensure screenshots are uploaded even if the script fails
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshots
+          path: "*.png"  # Upload all PNG files generated during the script
